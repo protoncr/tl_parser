@@ -25,7 +25,7 @@ module TLParser
       # parse `type<generic_arg>`
       ty, generic_arg = if (pos = ty.index('<'))
         if ty.ends_with?('>')
-          {ty[..pos], Type.parse(ty[(pos + 1)..(ty.size - 1)])}
+          {ty[..pos - 1], Type.parse(ty[(pos + 1)..-2])}
         else
           raise ParseError::InvalidGeneric.new
         end

@@ -35,6 +35,8 @@ module TLParser
           rescue err : ParseError
             STDERR.puts "Parse error: failed to parse definition on line #{i + 1}".colorize(:red)
             STDERR.puts "  #{i + 1} | #{line}".colorize(:light_red)
+          ensure
+            comment_stack.clear
           end
         end
       end
