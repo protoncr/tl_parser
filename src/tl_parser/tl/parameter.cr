@@ -29,5 +29,15 @@ module TLParser
 
       Parameter.new(name, ParamType.parse(ty))
     end
+
+    def to_s(io)
+      io << "#{name}:#{type}"
+    end
+
+    def ==(other)
+      other.is_a?(Parameter) &&
+      other.name == name &&
+      other.type == type
+    end
   end
 end

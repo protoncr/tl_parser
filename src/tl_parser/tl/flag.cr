@@ -21,5 +21,15 @@ module TLParser
         raise ParseError::InvalidFlag.new
       end
     end
+
+    def to_s(io)
+      io << "#{name}.#{index}"
+    end
+
+    def ==(other)
+      other.is_a?(Flag) &&
+      other.name == name &&
+      other.index == index
+    end
   end
 end

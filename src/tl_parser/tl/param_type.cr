@@ -24,6 +24,13 @@ module TLParser
   end
 
   struct FlagsParam < ParamType
+    def to_s(io)
+      io << "#"
+    end
+
+    def ==(other)
+      other.is_a?(FlagsParam)
+    end
   end
 
   struct NormalParam < ParamType
@@ -31,6 +38,19 @@ module TLParser
     getter flag : Flag?
 
     def initialize(@type, @flag = nil)
+    end
+
+    def to_s(io)
+      if flag
+        io << "#{flag}?"
+      end
+      io << type
+    end
+
+    def ==(other)
+      other.is_a?(NormalParam) &&
+      other.type == type &&
+      other.flag == flag
     end
   end
 end

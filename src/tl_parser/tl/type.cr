@@ -61,5 +61,30 @@ module TLParser
 
       output
     end
+
+    def to_s(io)
+      namespace.each do |ns|
+        io << "#{ns}."
+      end
+
+      if generic_ref
+        io << "!"
+      end
+
+      io << name
+
+      if arg = generic_arg
+        io << "<#{arg}>"
+      end
+    end
+
+    def ==(other)
+      other.is_a?(Type) &&
+      other.namespace == namespace &&
+      other.name == name &&
+      other.bare == bare &&
+      other.generic_ref == generic_ref &&
+      other.generic_arg == generic_arg
+    end
   end
 end

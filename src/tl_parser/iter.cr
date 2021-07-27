@@ -3,7 +3,7 @@ require "./tl/*"
 
 module TLParser
   class Iter
-    include Enumerable(Tuple(TLParser::Category, TLParser::Definition))
+    include Enumerable(TLParser::Definition)
 
     DEFINITIONS_SEP = ";"
     FUNCTIONS_SEP = "---functions---"
@@ -30,10 +30,12 @@ module TLParser
         else
           begin
             definition = Definition.parse(line)
+            definition.category = category
             definition.description = comment_stack.join('\n')
-            yield({category, definition})
+            yield(definition)
           rescue err : ParseError
-            STDERR.puts "Parse error: failed to parse definition on line #{i + 1}".colorize(:red)
+            errname = err.class.name.split("::").last
+            STDERR.puts "#{errname}: failed to parse definition on line #{i + 1}".colorize(:red)
             STDERR.puts "  #{i + 1} | #{line}".colorize(:light_red)
           ensure
             comment_stack.clear

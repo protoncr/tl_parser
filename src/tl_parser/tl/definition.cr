@@ -29,7 +29,7 @@ module TLParser
     end
 
     def self.parse(str : String)
-      raise ParseError.new if str.strip.empty?
+      raise ParseError::Empty.new if str.strip.empty?
 
       # Strip trailing `;`
       str = str[..-2] if str.ends_with?(';')
@@ -38,13 +38,13 @@ module TLParser
       begin
         left, ty = str.split('=', 2).map(&.strip)
       rescue err : IndexError
-        raise ParseError::MissingDef.new
+        raise ParseError::MissingType.new
       end
 
       begin
         ty = Type.parse(ty)
       rescue err : ParseError
-        raise ParseError::MissingDef.new
+        raise ParseError::MissingType.new
       end
 
       # parse `name middle`
@@ -63,20 +63,17 @@ module TLParser
       name = namespace.pop
 
       # parse `id`
-      case id
-      when Nil
-        id = TLParser::Utils.infer_id(str)
-      else
-        begin
-          id = id.to_u32(16)
-        rescue err : ArgumentError
-          raise ParseError::InvalidID.new
-        rescue err : ParseError::NotImplemented
-          raise ParseError::NotImplemented.new
-        rescue err
-          raise ParseError::InvalidParam.new(err.message)
+      id =
+        case id
+        when Nil
+          TLParser::Utils.infer_id(str)
+        else
+          begin
+            id.to_u32(16)
+          rescue err
+            raise ParseError::InvalidID.new(id.to_s)
+          end
         end
-      end
 
       type_defs = [] of String
       flag_defs = [] of String
@@ -102,10 +99,10 @@ module TLParser
 
           # If the parameter type is a generic ref ensure it's valid.
           if param.type.is_a?(NormalParam)
-            if param.type.as(NormalParam).type.generic_ref && !type_defs.includes?(param.type)
-              raise ParseError::MissingDef.new
-            else
-              next param
+            if (param.type.as(NormalParam).type.generic_ref) && (pname = param.type.as(NormalParam).type.name)
+              if (!type_defs.includes?(pname))
+                raise ParseError::MissingDef.new
+              end
             end
           end
 
@@ -131,6 +128,56 @@ module TLParser
         end
 
         Definition.new(namespace, name, id, params, ty, Category::Types)
+    end
+
+    # Convenience function to format both the namespace and name back into a single string.
+    def full_name
+      String.build do |str|
+        namespace.each do |ns|
+          str << "#{ns}."
+        end
+        str << name
+      end
+    end
+
+    def to_s(io)
+      namespace.each do |ns|
+        io << "#{ns}."
+      end
+
+      io << name
+      io << "#"
+      io << id.to_s(16)
+
+      # If any parameter references a generic, make sure to define it early
+      type_defs = [] of String
+      params.each do |param|
+        if param.type.is_a?(TLParser::NormalParam)
+          type_defs.concat(param.type.as(TLParser::NormalParam).type.find_generic_refs)
+        end
+      end
+      type_defs.sort!
+      type_defs.uniq!
+      type_defs.each do |td|
+        io << " {#{td}:Type}"
+      end
+
+      params.each do |param|
+        io << " #{param}"
+      end
+
+      io << " = #{type}"
+    end
+
+    def ==(other)
+      other.is_a?(Definition) &&
+      other.namespace == namespace &&
+      other.name == name &&
+      other.id == id &&
+      other.params == params &&
+      other.type == type &&
+      other.category == category &&
+      other.description == description
     end
   end
 end
