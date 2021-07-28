@@ -62,6 +62,10 @@ module TLParser
       output
     end
 
+    def namespace_str(joiner = ".", proc : String -> String = ->(str : String) { str })
+      namespace.map(&proc).join(joiner)
+    end
+
     def to_s(io)
       namespace.each do |ns|
         io << "#{ns}."
