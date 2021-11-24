@@ -5,14 +5,14 @@ module TLParser
       name : String,
 
       # The bit index used by this flag inside the flags parameter.
-      index : UInt32 do
+      index : Int32 do
 
     def self.parse(str : String)
       if str.includes?('.')
         pieces = str.split('.')
         name = pieces.first(pieces.size - 1).join('.')
         index = begin
-          pieces.last.to_u32
+          pieces.last.to_i
         rescue err : ArgumentError
           raise ParseError::InvalidFlag.new
         end
@@ -24,6 +24,13 @@ module TLParser
 
     def to_s(io)
       io << "#{name}.#{index}"
+    end
+
+    def to_h
+      {
+        "name" => name,
+        "index" => index,
+      }
     end
 
     def ==(other)
